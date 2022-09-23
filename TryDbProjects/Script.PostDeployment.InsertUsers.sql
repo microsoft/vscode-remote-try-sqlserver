@@ -1,4 +1,4 @@
-USE TrySqlInContainer;
+USE TryDbProjects;
 
 IF (SELECT COUNT(*) from dbo.Users ) = 0
 

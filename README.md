@@ -59,16 +59,16 @@ Once you have this sample opened, you'll be able to work with it like you would 
     SQL Server Database projects allow you to organize the code artifacts, generate a dacpac, or easily deploy schema changes on an instace. In this repository, you'll find a sample Database project that creates a single `User` table and populate it with some records. Let's deploy it on the SQL Instance integrated into 
 
     - On the primary sidebar (on the left), click on **Database projects** tab.
-    - The _Database Projects_ pane appears. The `TrySqlInContainer` project shows up. You can just right-click the database project name and click **Publish**. You'll have a series of prompts. Answer with these items:
+    - The _Database Projects_ pane appears. The `TryDbProjects` project shows up. You can just right-click the database project name and click **Publish**. You'll have a series of prompts. Answer with these items:
         - Publish to an existing SQL server
         - Don't use profile
         - mssql-container
         - Type the password 
-        - Select 'TrySQLInContainer' database
+        - Select 'TryDbProjects' database
         - Publish
     - After a minute or so, the database schema will be deployed. You can follow the deployment via the notification or through _Database Projects_ output. 
 
-> Note: you might have to update _dotnet SDK location_ to `/usr/bin/` in the settings to execute the publish step.
+> Note: you might have to update _dotnet SDK location_ to `/usr/bin/` in the settings to execute the publish step. This setting is called _Dotnet SQL Location_ under _Extensions_ > _Database Projects_.
 
 3. **Explore your database with SQL Server extension**
 
