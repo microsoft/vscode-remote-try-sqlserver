@@ -79,6 +79,34 @@ Once you have this sample opened, you'll be able to work with it like you would 
     - Type the password listed previously
     - The treeview will be populated with Database items. For example, you can explore the tables or even select the rows in the `dbo.Users` table created with the SQL Database project at the previous step.
 
+## Things to try with an Azure Subscription
+
+This remote container uses the Azure CLI [dev container feature](https://github.com/devcontainers/features), that allows to interact with your Azure subscription. Here we will create a new Azure SQL Server and deploy our schema onto it. 
+
+> Note: In this example, we use the Azure CLI to create our Azure resources. In a production environment, we would probably rely on Infrastructure tools like [Bicep](https://learn.microsoft.com/azure/azure-resource-manager/bicep/overview?tabs=bicep). 
+
+1. **Login to your Azure account and create resources**
+
+    - Open the terminal pane and type `az login --use-device-code`. Follow the instructions
+    - Once logged-in, execute `./infrastructure/createAzureSQLServer.sh`
+    - Copy the connection string, this will be necessary in the next step.
+
+    This script will create an Azure SQL logical server, an Azure SQL Database, and will create a firewall rule opening the traffic to the whole Internet. **You should not use this script for production scenarios**. Also, remember to execute the Cleanup step below to avoid excessive billing.
+
+2. **Prepare database project and deploy it to Azure**
+
+    - On the primary sidebar (on the left), click on **Database projects** tab.
+    - The _Database Projects_ pane appears. The `TryDbProjects` project shows up.
+    - Right click on the project name, and click on **Change target platform**, and select **Azure SQL Database**
+    - You can now deploy the database schema like you've done in the previous example, by using the connection string generated in step 1.
+
+    Your database schema will be published. You can go back on the **SQL Server** Pane to explore it.
+
+3. Cleanup Azure resources
+
+    The scripts executed in step 1 creates Azure resources on your subscription. This will incurr some billing. Once you've finished trying this feature, you can simply delete the created resource group. The Azure CLI command to execute is displayed on step 1. It looks like `az group delete --name resourceGroup`
+
+
 ## Contributing
 
 This project welcomes contributions and suggestions.  Most contributions require you to agree to a
