@@ -1,5 +1,3 @@
-USE TryDbProjects;
-
 IF (SELECT COUNT(*) from dbo.Users ) = 0
 
     INSERT INTO dbo.Users
