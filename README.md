@@ -12,9 +12,10 @@ This is a sample project that lets you try out either option in a few easy steps
 ## Setting up the development container
 
 ### GitHub Codespaces
-Follow these steps to open this sample in a Codespace:
-1. Click the Code drop-down menu and select the **Open with Codespaces** option.
-1. Select **+ New codespace** at the bottom of the pane.
+Follow these steps to open this sample in a Codespaces:
+
+1. Click the Code drop-down menu and select the **Codespaces** tab.
+1. Click on **Create codespaces on main** at the bottom of the pane.
 
 For more info, check out the [GitHub documentation](https://docs.github.com/en/free-pro-team@latest/github/developing-online-with-codespaces/creating-a-codespace#creating-a-codespace).
 
@@ -46,7 +47,7 @@ Once you have this sample opened, you'll be able to work with it like you would 
 
 1. **Connect via SQLCMD and create a new database**
 
-    SQLCMD is already installed within the container. You can use it from the **Terminal** tab. For example, you can execute a SQL Script. This example creates a new database.
+    SQLCMD is already installed within the container. You can use it from the **Terminal** tab, using the *bash* shell, for example. For example, you can execute a SQL Script. This example creates a new database.
 
     ```sql
     /opt/mssql-tools/bin/sqlcmd -S localhost -U sa -P P@ssw0rd -d master -i 01-CreateDatabase.sql
@@ -59,13 +60,12 @@ Once you have this sample opened, you'll be able to work with it like you would 
     SQL Server Database projects allow you to organize the code artifacts, generate a dacpac, or easily deploy schema changes on an instace. In this repository, you'll find a sample Database project that creates a single `User` table and populate it with some records. Let's deploy it on the SQL Instance integrated into 
 
     - On the primary sidebar (on the left), click on **Database projects** tab.
-    - The _Database Projects_ pane appears. The `TryDbProjects` project shows up. You can just right-click the database project name and click **Publish**. You'll have a series of prompts. Answer with these items:
-        - Publish to an existing SQL server
-        - Don't use profile
-        - mssql-container
-        - Type the password 
-        - Select 'TryDbProjects' database
-        - Publish
+    - The _Database Projects_ pane appears. The `TryDbProjects` project shows up. You can just right-click the database project name and click **Publish**. You'll have a series of prompts. Answer with these items (Prompt -> Answer):
+        - Select where to publish the project to -> Publish to an existing SQL server
+        - Select publish profile to load -> Don't use profile
+        - Choose a connection profile from the list below -> mssql-container
+        - Select database -> TryDbProject
+        - Choose action -> Publish
     - After a minute or so, the database schema will be deployed. You can follow the deployment via the notification or through _Database Projects_ output. 
 
 > Note: you might have to update _dotnet SDK location_ to `/usr/bin/` in the settings to execute the publish step. This setting is called _Dotnet SQL Location_ under _Extensions_ > _Database Projects_.
