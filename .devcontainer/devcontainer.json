@@ -23,9 +23,9 @@
 						"savePassword": false,
 						"profileName": "mssql-container"
 					}
-				]
+				],
+				"sqlDatabaseProjects.dotnetSDK Location": "/usr/bin/"
 			},
-			
 			// Add the IDs of extensions you want installed when the container is created.
 			"extensions": [
 				"ms-dotnettools.csharp",
