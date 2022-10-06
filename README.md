@@ -12,6 +12,7 @@ This is a sample project that lets you try out either option in a few easy steps
 ## Setting up the development container
 
 ### GitHub Codespaces
+
 Follow these steps to open this sample in a Codespaces:
 
 1. Click the Code drop-down menu and select the **Codespaces** tab.
@@ -47,17 +48,17 @@ Once you have this sample opened, you'll be able to work with it like you would 
 
 1. **Connect via SQLCMD and create a new database**
 
-    SQLCMD is already installed within the container. You can use it from the **Terminal** tab, using the *bash* shell, for example. For example, you can execute a SQL Script. This example creates a new database.
+    SQLCMD is already installed within the container. You can use it from the **Terminal** tab, using the *bash* shell. For example, you can execute a SQL Script. This example creates a new database.
 
     ```sql
     /opt/mssql-tools/bin/sqlcmd -S localhost -U sa -P P@ssw0rd -d master -i 01-CreateDatabase.sql
     ```
 
-    > Note: The SQL Server instance is created with user `sa` and password `P@ssw0rd`. You will need it for the next steps. This password is defined in the `devcontainer.json` file. This password is not secure. It could be used in local developement scenarios but must not be used elsewhere (hosted team development server, or production server).
+    > Note: The SQL Server instance is created with user `sa` and password `P@ssw0rd`. You will need it for the next steps. This password is defined in the `devcontainer.json` file. This password is not secure. It could be used in local development scenarios but must not be used elsewhere (hosted team development server, or production server).
 
 2. **Deploy schema with SQL Database projects**
 
-    SQL Server Database projects allow you to organize the code artifacts, generate a dacpac, or easily deploy schema changes on an instace. In this repository, you'll find a sample Database project that creates a single `User` table and populate it with some records. Let's deploy it on the SQL Instance integrated into 
+    SQL Server Database projects allow you to organize the code artifacts, generate a dacpac, or easily deploy schema changes on an instance. In this repository, you'll find a sample Database project that creates a single `User` table and populate it with some records. Let's deploy it on the SQL Instance integrated into the dev container.
 
     - On the primary sidebar (on the left), click on **Database projects** tab.
     - The _Database Projects_ pane appears. The `TryDbProjects` project shows up. You can just right-click the database project name and click **Publish**. You'll have a series of prompts. Answer with these items (Prompt -> Answer):
@@ -66,9 +67,9 @@ Once you have this sample opened, you'll be able to work with it like you would 
         - Choose a connection profile from the list below -> mssql-container
         - Select database -> TryDbProject
         - Choose action -> Publish
-    - After a minute or so, the database schema will be deployed. You can follow the deployment via the notification or through _Database Projects_ output. 
+    - After a minute or so, the database schema should be deployed. You can follow the deployment via the notification or through _Database Projects_ output. 
 
-> Note: you might have to update _dotnet SDK location_ to `/usr/bin/` in the settings to execute the publish step. This setting is called _Dotnet SQL Location_ under _Extensions_ > _Database Projects_.
+> Note: you might have to update the extension setting _dotnet SDK location_ to `/usr/bin/` to execute the publish step. This setting is called _Dotnet SQL Location_ under _Extensions_ > _Database Projects_.
 
 3. **Explore your database with SQL Server extension**
 
@@ -91,7 +92,9 @@ This remote container uses the Azure CLI [dev container feature](https://github.
     - Once logged-in, execute `./infrastructure/createAzureSQLServer.sh`
     - Copy the connection string, this will be necessary in the next step.
 
-    This script will create an Azure SQL logical server, an Azure SQL Database, and will create a firewall rule opening the traffic to the whole Internet. **You should not use this script for production scenarios**. Also, remember to execute the Cleanup step below to avoid excessive billing.
+    This script will create an Azure SQL logical server, an Azure SQL Database, and will create a firewall rule opening the traffic to the whole Internet. **You should not use this script for production scenarios**. 
+    
+    >Remember to execute the Cleanup step below to avoid excessive billing.
 
 2. **Prepare database project and deploy it to Azure**
 
@@ -104,7 +107,7 @@ This remote container uses the Azure CLI [dev container feature](https://github.
 
 3. Cleanup Azure resources
 
-    The scripts executed in step 1 creates Azure resources on your subscription. This will incurr some billing. Once you've finished trying this feature, you can simply delete the created resource group. The Azure CLI command to execute is displayed on step 1. It looks like `az group delete --name resourceGroup`
+    The scripts executed in step 1 creates Azure resources on your subscription. This will incur some billing. Once you've finished trying this feature, you can simply delete the created resource group. The Azure CLI command to execute is displayed on step 1. It looks like `az group delete --name resourceGroup`
 
 
 ## Contributing
