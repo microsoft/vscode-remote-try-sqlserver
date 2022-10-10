@@ -109,6 +109,10 @@ This remote container uses the Azure CLI [dev container feature](https://github.
 
     The scripts executed in step 1 creates Azure resources on your subscription. This will incur some billing. Once you've finished trying this feature, you can simply delete the created resource group. The Azure CLI command to execute is displayed on step 1. It looks like `az group delete --name resourceGroup`
 
+> **About Azure Billing**
+> In this example, we are using the [Serverless compute tier](https://learn.microsoft.com/en-us/azure/azure-sql/database/serverless-tier-overview?view=azuresql) of Azure SQL. This should incur a maximum billing of few euros if used for an hour. Depending on your subscription, you can leverage the [Azure Free Tier](https://azure.microsoft.com/free/).
+> 
+> As a good practice, in cloud environments, you should delete resources you don't use.
 
 ## Contributing
 
