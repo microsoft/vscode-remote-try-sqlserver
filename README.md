@@ -51,7 +51,7 @@ Once you have this sample opened, you'll be able to work with it like you would 
     SQLCMD is already installed within the container. You can use it from the **Terminal** tab, using the *bash* shell. For example, you can execute a SQL Script. This example creates a new database.
 
     ```sql
-    /opt/mssql-tools/bin/sqlcmd -S localhost -U sa -P P@ssw0rd -d master -i 01-CreateDatabase.sql
+    sqlcmd -S localhost -U sa -P P@ssw0rd -d master -i 01-CreateDatabase.sql
     ```
 
     > Note: The SQL Server instance is created with user `sa` and password `P@ssw0rd`. You will need it for the next steps. This password is defined in the `devcontainer.json` file. This password is not secure. It could be used in local development scenarios but must not be used elsewhere (hosted team development server, or production server).
