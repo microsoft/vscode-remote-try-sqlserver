@@ -1,6 +1,6 @@
 # [Choice] .NET version: 6.0-focal, 3.1-focal
-ARG VARIANT="3.1-focal"
-FROM mcr.microsoft.com/vscode/devcontainers/dotnet:0-${VARIANT}
+ARG VARIANT="6.0-focal"
+FROM mcr.microsoft.com/devcontainers/dotnet:0-${VARIANT}
 
 # [Choice] Node.js version: none, lts/*, 18, 16, 14
 ARG NODE_VERSION="none"
