@@ -6,8 +6,8 @@ services:
       context: .
       dockerfile: Dockerfile
       args:
-        # Update 'VARIANT' to pick a version of .NET: 3.1-focal, 6.0-focal
-        VARIANT: "6.0-focal"
+        # Update 'VARIANT' to pick a version and OS for .NET.
+        VARIANT: "8.0-noble"
         # Optional version of Node.js
         NODE_VERSION: "none"
 

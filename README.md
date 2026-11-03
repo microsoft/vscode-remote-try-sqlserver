@@ -40,6 +40,16 @@ Follow these steps to open this sample in a container using the VS Code Dev Cont
    - Press <kbd>F1</kbd> and select the **Dev Containers: Open Folder in Container...** command.
    - Select the cloned copy of this folder, wait for the container to start, and try things out!
 
+## Blazor website
+
+A basic .NET 8 Blazor Server app is included in `TryBlazor`. Start it from the workspace root:
+
+```sh
+dotnet run --project TryBlazor --urls http://0.0.0.0:5080
+```
+
+Open the forwarded port 5080 in VS Code to view the app.
+
 ## Things to try
 
 Once you have this sample opened, you'll be able to work with it like you would locally.
@@ -65,7 +75,7 @@ Once you have this sample opened, you'll be able to work with it like you would 
         - Select where to publish the project to -> Publish to an existing SQL server
         - Select publish profile to load -> Don't use profile
         - Choose a connection profile from the list below -> mssql-container
-        - Select database -> TryDbProject
+        - Select database -> TryDbProjects
         - Choose action -> Publish
     - After a minute or so, the database schema should be deployed. You can follow the deployment via the notification or through _Database Projects_ output. 
 

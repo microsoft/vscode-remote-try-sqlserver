@@ -1,0 +1,239 @@
+@page "/import-excel"
+@using System.Globalization
+@using NPOI.SS.UserModel
+@using TryBlazor.Data
+@inject BeoLineItemService BeoLineItemService
+@inject ILogger<ImportExcel> Logger
+
+<PageTitle>Import Excel file</PageTitle>
+
+<h1>Import Excel file</h1>
+
+<p>Upload an Excel workbook to import BEOs and their line items from the Master worksheet.</p>
+
+<InputFile OnChange="HandleFileSelected" accept=".xls,.xlsx" />
+
+<p class="text-muted">Maximum file size: 10 MB. The Master worksheet must include ID, DATE, ROOM, START, DESCRIPTION, #, and NOTES columns.</p>
+
+@if (statusMessage is not null)
+{
+    <div class="alert @(isError ? "alert-danger" : "alert-info")" role="status">@statusMessage</div>
+}
+
+@code {
+    private const long MaxUploadSize = 10 * 1024 * 1024;
+
+    private string? statusMessage;
+    private bool isError;
+
+    private async Task HandleFileSelected(InputFileChangeEventArgs args)
+    {
+        statusMessage = null;
+        isError = false;
+
+        var file = args.File;
+        var extension = Path.GetExtension(file.Name);
+        if (!string.Equals(extension, ".xls", StringComparison.OrdinalIgnoreCase)
+            && !string.Equals(extension, ".xlsx", StringComparison.OrdinalIgnoreCase))
+        {
+            ShowError("Choose an Excel workbook with an .xls or .xlsx extension.");
+            return;
+        }
+
+        if (file.Size > MaxUploadSize)
+        {
+            ShowError("The selected file exceeds the 10 MB upload limit.");
+            return;
+        }
+
+        try
+        {
+            await using var uploadStream = file.OpenReadStream(MaxUploadSize);
+            using var workbookStream = new MemoryStream();
+            await uploadStream.CopyToAsync(workbookStream);
+            workbookStream.Position = 0;
+
+            var rows = ParseExcel(workbookStream);
+            var result = await BeoLineItemService.ImportRowsAsync(rows);
+            statusMessage = $"Imported {result.BeosCreated} BEOs and {result.LineItemsCreated} line items.";
+        }
+        catch (InvalidDataException exception)
+        {
+            Logger.LogWarning(exception, "The Excel file {FileName} is not valid for import.", file.Name);
+            ShowError(exception.Message);
+        }
+        catch (Exception exception)
+        {
+            Logger.LogError(exception, "Failed to import Excel file {FileName}.", file.Name);
+            ShowError("The Excel file could not be uploaded or saved. Check that SQL Server is running and the database connection is configured.");
+        }
+    }
+
+    private static IReadOnlyList<BeoImportRow> ParseExcel(Stream workbook)
+    {
+        using var excelWorkbook = WorkbookFactory.Create(workbook);
+        var sheet = excelWorkbook.GetSheet("Master")
+            ?? throw new InvalidDataException("The workbook does not contain a worksheet named 'Master'.");
+        var headerRow = sheet.GetRow(sheet.FirstRowNum)
+            ?? throw new InvalidDataException("The Master worksheet does not contain a header row.");
+        var formatter = new DataFormatter();
+        var headerCellCount = headerRow.LastCellNum;
+        var headers = Enumerable.Range(0, Math.Max(0, (int)headerCellCount))
+            .Select(index => headerRow.GetCell(index) is { } cell ? formatter.FormatCellValue(cell).Trim() : "")
+            .ToArray();
+
+        if (headers.Length == 0 || headers.Any(string.IsNullOrWhiteSpace))
+        {
+            throw new InvalidDataException("Every column in the Master worksheet header row must have a name.");
+        }
+
+        if (headers.Distinct(StringComparer.OrdinalIgnoreCase).Count() != headers.Length)
+        {
+            throw new InvalidDataException("The header row contains duplicate column names.");
+        }
+
+        var requiredHeaders = new[] { "DATE", "START", "END", "ROOM", "AVAILABLE /      TURN TIME"
+            , "DESCRIPTION", "#", "NOTES", "EVENT TITLE","E.M.", "ID" };
+        var missingHeaders = requiredHeaders
+            .Where(requiredHeader => !headers.Contains(requiredHeader, StringComparer.OrdinalIgnoreCase))
+            .ToArray();
+        if (missingHeaders.Length > 0)
+        {
+            throw new InvalidDataException($"The Master worksheet is missing required columns: {string.Join(", ", missingHeaders)}.");
+        }
+
+        var rows = new List<BeoImportRow>();
+        for (var rowIndex = sheet.FirstRowNum + 1; rowIndex <= sheet.LastRowNum; rowIndex++)
+        {
+            var excelRow = sheet.GetRow(rowIndex);
+            if (excelRow is null)
+            {
+                continue;
+            }
+
+            // Create Dictionary
+            var values = new Dictionary<string, string?>(StringComparer.OrdinalIgnoreCase);
+            for (var columnIndex = 0; columnIndex < headers.Length; columnIndex++)
+            {
+                var cell = excelRow.GetCell(columnIndex);
+                var value = cell is null ? null : formatter.FormatCellValue(cell).Trim();
+                values.Add(headers[columnIndex], string.IsNullOrEmpty(value) ? null : value);
+            }
+
+            //Skip if the row is empty or if the ID column contains the header value "ID" ("ID" means the row is a spacer between zones)
+            if (values.Values.All(string.IsNullOrWhiteSpace) || GetRequiredValue(values, "ID", rowIndex + 1) == "ID")
+            {
+                continue;
+            }
+
+            var excelRowNumber = rowIndex + 1;
+
+            //Validate required fields and parse values
+            var dateValue = GetRequiredValue(values, "DATE", excelRowNumber);
+            var dateCell = excelRow.GetCell(Array.FindIndex(headers, header => string.Equals(header, "DATE", StringComparison.OrdinalIgnoreCase)));
+            if (!TryParseDate(dateCell, dateValue, out var date))
+            {
+                throw new InvalidDataException($"DATE in row {excelRowNumber} is not a valid date.");
+            }
+
+            var startValue = GetRequiredValue(values, "START", excelRowNumber);
+            var startCell = excelRow.GetCell(Array.FindIndex(headers, header => string.Equals(header, "START", StringComparison.OrdinalIgnoreCase)));
+            if (!TryParseTime(startCell, startValue, out var startTime))
+            {
+                throw new InvalidDataException($"START in row {excelRowNumber} is not a valid time.");
+            }
+
+            var endValue = GetRequiredValue(values, "END", excelRowNumber);
+            var endCell = excelRow.GetCell(Array.FindIndex(headers, header => string.Equals(header, "END", StringComparison.OrdinalIgnoreCase)));
+            if (!TryParseTime(endCell, endValue, out var endTime))
+            {
+                throw new InvalidDataException($"END in row {excelRowNumber} is not a valid time.");
+            }
+
+            var room = GetRequiredValue(values, "ROOM", excelRowNumber);
+            var avail = GetOptionalValue(values, "AVAILABLE /      TURN TIME", excelRowNumber);
+            var itemText = GetOptionalValue(values, "DESCRIPTION", excelRowNumber);
+            
+            var quantityValue = values["#"];
+            int? quantity = null;
+            if (!string.IsNullOrWhiteSpace(quantityValue))
+            {
+                var quantityStyles = NumberStyles.Integer | NumberStyles.AllowThousands;
+                if (!int.TryParse(quantityValue, quantityStyles, CultureInfo.InvariantCulture, out var parsedQuantity)
+                    && !int.TryParse(quantityValue, quantityStyles, CultureInfo.CurrentCulture, out parsedQuantity))
+                {
+                    throw new InvalidDataException($"# in row {excelRowNumber} must be a whole number.");
+                }
+
+                quantity = parsedQuantity;
+            }
+            var notes = GetOptionalValue(values, "NOTES", excelRowNumber);
+            var eventIdValue = GetRequiredValue(values, "ID", excelRowNumber);
+            if (!int.TryParse(eventIdValue, NumberStyles.Integer, CultureInfo.InvariantCulture, out var eventId))
+            {
+                throw new InvalidDataException($"ID in row {excelRowNumber} must be a whole number.");
+            }
+
+                      
+
+            rows.Add(new BeoImportRow(                
+                date,
+                startTime,
+                endTime,
+                room, 
+                avail,       
+                itemText,
+                quantity,
+                notes,
+                eventId));
+        }
+
+        return rows;
+    }
+
+    private static string GetRequiredValue(IReadOnlyDictionary<string, string?> values, string columnName, int rowNumber)
+    {
+        return values.TryGetValue(columnName, out var value) && !string.IsNullOrWhiteSpace(value)
+            ? value
+            : throw new InvalidDataException($"{columnName} in row {rowNumber} is required.");
+    }
+
+    private static string GetOptionalValue(IReadOnlyDictionary<string, string?> values, string columnName, int rowNumber)
+    {
+        return values.TryGetValue(columnName, out var value) && !string.IsNullOrWhiteSpace(value)
+            ? value
+            : "";
+    }
+
+    private static bool TryParseDate(ICell? cell, string value, out DateOnly date)
+    {
+        if (cell is { CellType: CellType.Numeric } && DateUtil.IsCellDateFormatted(cell)
+            && cell.DateCellValue is { } dateTime)
+        {
+            date = DateOnly.FromDateTime(dateTime);
+            return true;
+        }
+
+        return DateOnly.TryParse(value, CultureInfo.CurrentCulture, DateTimeStyles.None, out date)
+            || DateOnly.TryParse(value, CultureInfo.InvariantCulture, DateTimeStyles.None, out date);
+    }
+
+    private static bool TryParseTime(ICell? cell, string value, out TimeOnly time)
+    {
+        if (cell is { CellType: CellType.Numeric } && DateUtil.IsCellDateFormatted(cell)
+            && cell.DateCellValue is { } dateTime)
+        {
+            time = TimeOnly.FromDateTime(dateTime);
+            return true;
+        }
+
+        return TimeOnly.TryParse(value, CultureInfo.CurrentCulture, DateTimeStyles.None, out time)
+            || TimeOnly.TryParse(value, CultureInfo.InvariantCulture, DateTimeStyles.None, out time);
+    }
+
+    private void ShowError(string message)
+    {
+        isError = true;
+        statusMessage = message;
+    }
+}

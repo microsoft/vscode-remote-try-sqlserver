@@ -1,0 +1,26 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Blazor: TryBlazor",
+            "type": "coreclr",
+            "request": "launch",
+            "preLaunchTask": "build TryBlazor",
+            "program": "${workspaceFolder}/TryBlazor/bin/Debug/net8.0/TryBlazor.dll",
+            "args": [],
+            "cwd": "${workspaceFolder}/TryBlazor",
+            "stopAtEntry": false,
+            "env": {
+                "ASPNETCORE_ENVIRONMENT": "Development",
+                "ASPNETCORE_URLS": "http://0.0.0.0:5080"
+            },
+            "serverReadyAction": {
+                "action": "openExternally",
+                "pattern": "\\bNow listening on:\\s+(https?://\\S+)"
+            }
+        }
+    ]
+}

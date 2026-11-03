@@ -1,0 +1,9 @@
+CREATE TABLE [dbo].[BEOs]
+(
+    [Id] INT IDENTITY(1, 1) NOT NULL,
+    [EventID] INT NOT NULL,
+    [StartTime] TIME(0) NOT NULL,
+    [Location] NVARCHAR(200) NULL,
+    [Date] DATE NOT NULL,
+    CONSTRAINT [PK_BEOs] PRIMARY KEY CLUSTERED ([Id])
+);

@@ -1,0 +1,159 @@
+@page "/line-items"
+@using TryBlazor.Data
+@inject BeoLineItemService BeoLineItemService
+@inject ILogger<LineItems> Logger
+
+<PageTitle>BEO line items</PageTitle>
+
+<h1>BEO line items</h1>
+
+@if (errorMessage is not null)
+{
+    <div class="alert alert-danger" role="alert">@errorMessage</div>
+}
+
+@if (beos is null)
+{
+    <p><em>Loading BEOs...</em></p>
+}
+else if (beos.Count == 0)
+{
+    <p>No BEOs were found.</p>
+}
+else
+{
+    <div class="mb-3">
+        <label for="beo-select" class="form-label">Select a BEO</label>
+        <select id="beo-select" class="form-select" value="@selectedBeoId" @onchange="HandleBeoChanged">
+            <option value="">Choose a BEO...</option>
+            @foreach (var beo in beos)
+            {
+                <option value="@beo.Id" selected="@(selectedBeoId == beo.Id)">
+                    BEO Event @beo.EventId, @beo.StartTime.ToString("hh\\:mm")@if (!string.IsNullOrWhiteSpace(beo.Location))
+                    {
+                        <text>, @beo.Location</text>
+                    }
+                </option>
+            }
+        </select>
+    </div>
+
+    @if (selectedBeoId is not null)
+    {
+        if (isLoadingLineItems)
+        {
+            <p><em>Loading line items...</em></p>
+        }
+        else if (lineItems is { Count: 0 })
+        {
+            <p>No line items were found for the selected BEO.</p>
+        }
+        else if (lineItems is not null)
+        {
+            <div class="table-responsive">
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            
+                            <th>Item</th>
+                            <th>Quantity</th>
+                            <th>Notes</th>
+                            <th>Completed time</th>
+                            <th>Completed by</th>
+                            <th>Mark Complete</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var item in lineItems)
+                        {
+                            <tr>
+                                
+                                <td>@(item.ItemText ?? "(none)")</td>
+                                <td>@(item.Quantity?.ToString() ?? "(none)")</td>
+                                <td>@(item.Notes ?? "(none)")</td>
+                                <td>@(item.CompletedTime?.ToString(@"hh\:mm\:ss") ?? "(none)")</td>
+                                <td>@(item.CompletedBy?.ToString() ?? "(none)")</td>
+                                <td>
+                                    <button class="btn btn-primary btn-sm" @onclick="() => MarkComplete(item.Id)">
+                                        Mark Complete
+                                    </button>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+    }
+}
+
+@code {
+    private IReadOnlyList<BeoOption>? beos;
+    private IReadOnlyList<LineItem>? lineItems;
+    private int? selectedBeoId;
+    private bool isLoadingLineItems;
+    private string? errorMessage;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            beos = await BeoLineItemService.GetBeosAsync();
+        }
+        catch (Exception exception)
+        {
+            Logger.LogError(exception, "Failed to load BEOs.");
+            errorMessage = "Could not load BEOs. Check that SQL Server is running and the database connection is configured.";
+        }
+    }
+
+    private async Task HandleBeoChanged(ChangeEventArgs args)
+    {
+        errorMessage = null;
+        lineItems = null;
+        isLoadingLineItems = false;
+
+        if (!int.TryParse(args.Value?.ToString(), out var beoId))
+        {
+            selectedBeoId = null;
+            return;
+        }
+
+        selectedBeoId = beoId;
+        isLoadingLineItems = true;
+
+        try
+        {
+            lineItems = await BeoLineItemService.GetLineItemsAsync(beoId);
+        }
+        catch (Exception exception)
+        {
+            Logger.LogError(exception, "Failed to load line items for BEO {BeoId}.", beoId);
+            errorMessage = "Could not load line items for the selected BEO.";
+        }
+        finally
+        {
+            isLoadingLineItems = false;
+        }
+    }
+
+    private async Task MarkComplete(int id)
+    {
+        errorMessage = null;
+
+        try
+        {
+            await BeoLineItemService.MarkCompleteAsync(id);
+
+            if (selectedBeoId is int beoId)
+            {
+                lineItems = await BeoLineItemService.GetLineItemsAsync(beoId);
+            }
+        }
+        catch (Exception exception)
+        {
+            Logger.LogError(exception, "Failed to mark line item {LineItemId} as complete.", id);
+            errorMessage = "Could not mark the line item as complete.";
+        }
+    }
+}

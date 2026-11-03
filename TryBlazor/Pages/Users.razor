@@ -1,0 +1,55 @@
+@page "/users"
+@using TryBlazor.Data
+@inject UserEmailService UserEmailService
+@inject ILogger<Users> Logger
+
+<h1>User emails</h1>
+
+@if (errorMessage is not null)
+{
+    <div class="alert alert-danger" role="alert">@errorMessage</div>
+}
+else if (emails is null)
+{
+    <p><em>Loading email addresses...</em></p>
+}
+else if (emails.Count == 0)
+{
+    <p>No users were found.</p>
+}
+else
+{
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Email</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var email in emails)
+            {
+                <tr>
+                    <td>@(email ?? "(no email)")</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@code {
+    private IReadOnlyList<string?>? emails;
+    private string? errorMessage;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            emails = await UserEmailService.GetFirstTenAsync();
+        }
+        catch (Exception exception)
+        {
+            Logger.LogError(exception, "Failed to load user email addresses.");
+            errorMessage = "Could not load user emails. Check that SQL Server is running and TryDbProjects is deployed.";
+        }
+    }
+}
